@@ -1,0 +1,1862 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Facebook Page Tracker</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#fff;--bg2:#f5f5f5;--bg3:#ebebeb;
+  --text:#1a1a1a;--text2:#555;--text3:#888;
+  --border:#e0e0e0;--border2:#ccc;
+  --green-bg:#e8f5e9;--green-text:#2e7d32;--green-border:#a5d6a7;
+  --yellow-bg:#fff8e1;--yellow-text:#e65100;--yellow-border:#ffe082;
+  --blue-bg:#e3f2fd;--blue-text:#1565c0;--blue-border:#90caf9;
+  --red-bg:#ffebee;--red-text:#c62828;--red-border:#ef9a9a;
+  --shadow:0 1px 3px rgba(0,0,0,0.09);
+  --fb:#1877f2;
+  --radius:10px;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#1e1e1e;--bg2:#272727;--bg3:#333;
+  --text:#f0f0f0;--text2:#bbb;--text3:#666;
+  --border:#3a3a3a;--border2:#555;
+  --green-bg:#1b3a1f;--green-text:#81c784;--green-border:#2e7d32;
+  --yellow-bg:#3a2e00;--yellow-text:#ffcc02;--yellow-border:#856000;
+  --blue-bg:#0d253a;--blue-text:#90caf9;--blue-border:#1565c0;
+  --red-bg:#3a0d0d;--red-text:#ef9a9a;--red-border:#7f0000;
+}}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg2);color:var(--text);min-height:100vh}
+
+/* ── HEADER ── */
+header{background:var(--bg);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20}
+.hd-left{display:flex;align-items:center;gap:10px}
+.fb-logo{width:24px;height:24px;fill:var(--fb)}
+header h1{font-size:16px;font-weight:600}
+.save-badge{font-size:11px;padding:3px 10px;border-radius:99px;background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border);opacity:0;transition:opacity .3s;pointer-events:none}
+.save-badge.show{opacity:1}
+
+/* ── LAYOUT ── */
+.app-body{display:flex;gap:0;min-height:calc(100vh - 57px)}
+.sidebar{width:220px;flex-shrink:0;background:var(--bg);border-right:1px solid var(--border);padding:12px 8px;display:flex;flex-direction:column;gap:4px;position:sticky;top:57px;height:calc(100vh - 57px);overflow-y:auto}
+.sidebar-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;padding:6px 8px 4px}
+.sidebar-page-btn{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;border:none;background:transparent;cursor:pointer;width:100%;text-align:left;color:var(--text2);transition:background .15s}
+.sidebar-page-btn:hover{background:var(--bg2)}
+.sidebar-page-btn.active{background:var(--blue-bg);color:var(--blue-text)}
+.sidebar-avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;overflow:hidden}
+.sidebar-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.sidebar-page-info{flex:1;min-width:0}
+.sidebar-page-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sidebar-page-sub{font-size:10px;color:var(--text3);margin-top:1px}
+.sidebar-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.sidebar-divider{height:1px;background:var(--border);margin:8px 4px}
+.sidebar-add-btn{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;border:1px dashed var(--border2);background:transparent;cursor:pointer;width:100%;color:var(--text3);font-size:12px;margin-top:4px}
+.sidebar-add-btn:hover{background:var(--bg2);color:var(--text2)}
+.sidebar-nav-btn{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;border:none;background:transparent;cursor:pointer;width:100%;text-align:left;color:var(--text2);font-size:13px}
+.sidebar-nav-btn:hover{background:var(--bg2)}
+.sidebar-nav-btn.active{background:var(--bg3);color:var(--text);font-weight:500}
+.content{flex:1;min-width:0;padding:20px 20px}
+@media(max-width:700px){
+  .sidebar{display:none}
+  .content{padding:16px}
+}
+
+/* ── SUMMARY ── */
+.summary-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.today-stat{border-radius:var(--radius)!important}
+.stat{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;box-shadow:var(--shadow)}
+.stat-label{font-size:11px;color:var(--text3);margin-bottom:4px;display:flex;align-items:center;gap:4px}
+.stat-num{font-size:26px;font-weight:700;line-height:1.1}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:3px}
+.green{color:var(--green-text)}.yellow{color:var(--yellow-text)}.blue{color:var(--blue-text)}.red{color:#ef5350}
+.today-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--fb);background:var(--blue-bg);border:1px solid var(--blue-border);border-radius:99px;padding:2px 9px;margin-bottom:10px}
+
+/* ── TABS ── */
+.tabs{display:flex;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:18px;width:fit-content;background:var(--bg)}
+.tab{padding:8px 18px;font-size:13px;cursor:pointer;background:transparent;color:var(--text2);border:none;border-right:1px solid var(--border);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.tab:last-child{border-right:none}
+.tab.active{background:var(--bg3);color:var(--text);font-weight:500}
+.tab:hover:not(.active){background:var(--bg2)}
+.section{display:none}.section.visible{display:block}
+
+/* ── PAGE CARD ── */
+.page-card{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.page-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.page-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0;overflow:hidden}
+.page-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.page-name-wrap{flex:1;min-width:0}
+.page-name{font-size:15px;font-weight:600}
+.page-name-input{font-size:15px;font-weight:600;border:none;background:transparent;color:var(--text);width:100%;outline:none;border-bottom:2px solid var(--fb);padding-bottom:2px}
+.page-sub{font-size:12px;color:var(--text3);margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.conn-badge{font-size:10px;padding:2px 7px;border-radius:99px;background:var(--blue-bg);color:var(--blue-text);border:1px solid var(--blue-border)}
+.icon-btn{border:none;background:transparent;cursor:pointer;padding:5px;border-radius:6px;color:var(--text3);display:flex;align-items:center;flex-shrink:0}
+.icon-btn:hover{background:var(--bg3);color:var(--text2)}
+.icon-btn.danger:hover{background:var(--red-bg);color:var(--red-text)}
+
+/* ── POSTS ── */
+.section-divider{border-top:1px solid var(--border);padding-top:12px;margin-top:12px}
+.section-label{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+
+/* ── SCHEDULE FORM ── */
+.schedule-form{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px}
+.schedule-type-row{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.type-btn{padding:5px 12px;font-size:12px;border-radius:99px;border:1px solid var(--border);background:var(--bg);color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:5px}
+.type-btn.active{font-weight:500}
+.type-btn.t-article.active{background:#e3f2fd;border-color:#90caf9;color:#1565c0}
+.type-btn.t-image.active{background:#f3e5f5;border-color:#ce93d8;color:#6a1b9a}
+.type-btn.t-reel.active{background:#fce4ec;border-color:#f48fb1;color:#880e4f}
+@media(prefers-color-scheme:dark){
+  .type-btn.t-article.active{background:#0d253a;border-color:#1565c0;color:#90caf9}
+  .type-btn.t-image.active{background:#2a1a3a;border-color:#6a1b9a;color:#ce93d8}
+  .type-btn.t-reel.active{background:#3a0d1e;border-color:#880e4f;color:#f48fb1}
+}
+.schedule-row{display:flex;gap:6px;align-items:stretch;flex-wrap:wrap}
+.post-input{flex:1;min-width:160px;font-size:13px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);box-sizing:border-box}
+.post-input:focus{outline:none;border-color:var(--fb)}
+.datetime-input{font-size:12px;padding:7px 8px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text2);width:168px;flex-shrink:0}
+.datetime-input:focus{outline:none;border-color:var(--fb)}
+.btn-schedule{padding:8px 14px;font-size:12px;border-radius:8px;border:none;background:var(--fb);color:#fff;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px;flex-shrink:0}
+.btn-schedule:hover{opacity:.88}
+.btn-schedule:disabled{opacity:.5;cursor:not-allowed}
+/* upload area */
+.upload-area{border:1.5px dashed var(--border2);border-radius:8px;padding:14px;text-align:center;cursor:pointer;margin-bottom:8px;transition:border-color .2s;position:relative}
+.upload-area:hover,.upload-area.drag{border-color:var(--fb);background:var(--blue-bg)}
+.upload-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-area-label{font-size:13px;color:var(--text3);pointer-events:none}
+.upload-preview{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:8px}
+.upload-preview img,.upload-preview video{width:48px;height:48px;object-fit:cover;border-radius:6px;flex-shrink:0}
+.upload-preview-info{flex:1;min-width:0}
+.upload-preview-name{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.upload-preview-size{font-size:11px;color:var(--text3)}
+.btn-remove-file{border:none;background:transparent;cursor:pointer;color:var(--text3);padding:4px;border-radius:4px}
+.btn-remove-file:hover{color:var(--red-text);background:var(--red-bg)}
+/* progress */
+.progress-wrap{margin-top:8px;display:none}
+.progress-wrap.show{display:block}
+.progress-bar-bg{background:var(--bg3);border-radius:99px;height:6px;overflow:hidden}
+.progress-bar-fill{height:100%;background:var(--fb);border-radius:99px;transition:width .3s}
+.progress-label{font-size:11px;color:var(--text3);margin-top:4px}
+/* post now result */
+.post-result{font-size:12px;margin-top:8px;padding:7px 10px;border-radius:8px;display:none}
+.post-result.ok{display:block;background:var(--green-bg);color:var(--green-text)}
+.post-result.err{display:block;background:var(--red-bg);color:var(--red-text)}
+
+/* ── SCHEDULED LIST ── */
+.sched-list{display:flex;flex-direction:column;gap:6px}
+.sched-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg)}
+.sched-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.dot-live{background:#ef5350;box-shadow:0 0 0 3px rgba(239,83,80,.25);animation:pulse 1.2s infinite}
+.dot-scheduled{background:#fb8c00;box-shadow:0 0 0 3px rgba(251,140,0,.2)}
+.dot-done{background:#43a047}
+.dot-failed{background:#9e9e9e}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(239,83,80,.25)}50%{box-shadow:0 0 0 5px rgba(239,83,80,.1)}}
+.sched-info{flex:1;min-width:0}
+.sched-title{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sched-meta{font-size:11px;color:var(--text3);margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.sched-type-tag{font-size:10px;padding:2px 7px;border-radius:99px;font-weight:500}
+.tag-article{background:#e3f2fd;color:#1565c0}
+.tag-image{background:#f3e5f5;color:#6a1b9a}
+.tag-reel{background:#fce4ec;color:#880e4f}
+@media(prefers-color-scheme:dark){
+  .tag-article{background:#0d253a;color:#90caf9}
+  .tag-image{background:#2a1a3a;color:#ce93d8}
+  .tag-reel{background:#3a0d1e;color:#f48fb1}
+}
+.sched-status-label{font-size:11px;font-weight:500}
+.label-live{color:#ef5350}
+.label-scheduled{color:#fb8c00}
+.label-done{color:#43a047}
+.label-failed{color:#757575}
+.post-result.loading{display:block;background:var(--blue-bg);color:var(--blue-text)}
+.fb-stats-pill{font-size:11px;color:var(--text3);display:flex;gap:8px}
+.src-tag{font-size:10px;color:var(--blue-text);white-space:nowrap;align-self:center}
+.btn-add{border:1px dashed var(--border2);border-radius:8px;padding:7px 12px;font-size:12px;cursor:pointer;background:transparent;color:var(--text3);width:100%;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-add:hover{background:var(--bg2);color:var(--text2)}
+.btn-add-page{border:1px solid var(--border);border-radius:var(--radius);padding:10px 16px;font-size:13px;cursor:pointer;background:var(--bg);color:var(--text2);width:100%;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:var(--shadow)}
+.btn-add-page:hover{background:var(--bg3)}
+.page-card-body{display:grid;grid-template-columns:1fr 290px;gap:0}
+.page-card-left{min-width:0;padding-right:16px;border-right:1px solid var(--border)}
+.page-card-right{padding-left:16px;display:flex;flex-direction:column}
+.preview-label{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.preview-fb-post{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;font-size:13px}
+.preview-fb-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.preview-fb-avatar{width:36px;height:36px;border-radius:50%;flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+.preview-fb-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.preview-fb-name{font-size:13px;font-weight:600;color:var(--text);line-height:1.2}
+.preview-fb-meta{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px}
+.preview-fb-msg{font-size:13px;color:var(--text);line-height:1.5;margin-bottom:8px;white-space:pre-wrap;word-break:break-word;max-height:120px;overflow:hidden}
+.preview-fb-media{width:100%;border-radius:8px;overflow:hidden;background:var(--bg3);min-height:80px;display:flex;align-items:center;justify-content:center;margin-bottom:8px}
+.preview-fb-media img,.preview-fb-media video{width:100%;max-height:180px;object-fit:cover;display:block}
+.preview-fb-media-empty{font-size:11px;color:var(--text3);padding:20px;text-align:center}
+.preview-fb-actions{display:flex;border-top:1px solid var(--border);padding-top:6px;margin-top:4px}
+.preview-fb-action{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;color:var(--text2);padding:3px}
+.preview-empty{text-align:center;padding:32px 16px;color:var(--text3);font-size:12px;line-height:1.6}
+.preview-sched-list{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.preview-sched-item{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg2);border-radius:8px;border:1px solid var(--border)}
+.preview-sched-title{font-size:12px;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.preview-sched-meta{font-size:10px;color:var(--text3)}
+@media(max-width:960px){
+  .page-card-body{grid-template-columns:1fr}
+  .page-card-left{padding-right:0;border-right:none;border-bottom:1px solid var(--border);padding-bottom:14px;margin-bottom:14px}
+  .page-card-right{padding-left:0}
+}
+
+/* ── FB PREVIEW ── */
+.fb-preview-item{padding:8px 10px;background:var(--bg2);border-radius:8px;margin-bottom:6px;font-size:12px;border:1px solid var(--border)}
+.fb-preview-body{flex:1;min-width:0}
+.fb-preview-msg{color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fb-preview-meta{color:var(--text3);margin-top:3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.btn-import{font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid var(--blue-border);background:var(--blue-bg);color:var(--blue-text);cursor:pointer;white-space:nowrap;flex-shrink:0}
+.btn-import:hover{opacity:.8}
+.imported-label{font-size:11px;color:var(--green-text);white-space:nowrap;flex-shrink:0}
+
+/* ── TOKEN MANAGER (tab) ── */
+.token-manager{display:flex;flex-direction:column;gap:12px}
+.token-card{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:16px;box-shadow:var(--shadow)}
+.token-card-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.token-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;overflow:hidden}
+.token-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.token-page-name{font-size:14px;font-weight:600;flex:1}
+.token-status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot-ok{background:var(--green-text)}
+.dot-none{background:var(--border2)}
+.token-field-row{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.token-input{flex:1;font-size:12.5px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--text);font-family:monospace;min-width:0;transition:border-color .2s}
+.token-input:focus{outline:none;border-color:var(--fb)}
+.token-input.has-token{border-color:var(--green-border)}
+.token-input.editing{border-color:var(--fb);background:var(--bg)}
+.icon-btn-sm{border:none;background:var(--bg3);cursor:pointer;padding:7px 9px;border-radius:8px;color:var(--text2);display:flex;align-items:center;flex-shrink:0;border:1px solid var(--border)}
+.icon-btn-sm:hover{background:var(--bg2);color:var(--text)}
+.icon-btn-sm.danger:hover{background:var(--red-bg);color:var(--red-text)}
+.token-actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn-primary{padding:7px 16px;font-size:12px;border-radius:8px;border:none;background:var(--fb);color:#fff;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.btn-primary:hover{opacity:.88}
+.btn-primary:disabled{opacity:.45;cursor:not-allowed}
+.btn-secondary{padding:7px 14px;font-size:12px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.btn-secondary:hover{background:var(--bg3)}
+.btn-danger-outline{padding:7px 14px;font-size:12px;border-radius:8px;border:1px solid var(--red-border);background:var(--red-bg);color:var(--red-text);cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.btn-danger-outline:hover{opacity:.8}
+.token-msg{font-size:12px;margin-top:8px;padding:6px 10px;border-radius:7px;display:none}
+.token-msg.ok{display:block;background:var(--green-bg);color:var(--green-text)}
+.token-msg.err{display:block;background:var(--red-bg);color:var(--red-text)}
+.token-msg.loading{display:block;background:var(--blue-bg);color:var(--blue-text)}
+.token-meta{font-size:11px;color:var(--text3);margin-top:6px;display:flex;gap:12px;flex-wrap:wrap}
+.token-meta span{display:flex;align-items:center;gap:4px}
+.help-link{font-size:12px;color:var(--fb);text-decoration:none;display:inline-flex;align-items:center;gap:4px;margin-top:14px}
+.help-link:hover{text-decoration:underline}
+
+/* ── RECENT ── */
+.filter-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.filter-label{font-size:12px;color:var(--text3)}
+.filter-btn{border:1px solid var(--border);border-radius:99px;padding:5px 14px;font-size:12px;cursor:pointer;background:var(--bg);color:var(--text2)}
+.filter-btn.active{background:var(--bg3);color:var(--text);font-weight:500;border-color:var(--border2)}
+.filter-btn:hover:not(.active){background:var(--bg2)}
+.recent-list{display:flex;flex-direction:column;gap:8px}
+.recent-item{display:flex;align-items:flex-start;gap:12px;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow)}
+.recent-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;overflow:hidden}
+.recent-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.recent-info{flex:1;min-width:0}
+.recent-title{font-size:14px;font-weight:500;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.recent-meta{font-size:12px;color:var(--text3);margin-top:3px;display:flex;gap:8px;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:500;white-space:nowrap}
+.badge.posted{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border)}
+.badge.pending{background:var(--yellow-bg);color:var(--yellow-text);border:1px solid var(--yellow-border)}
+.badge.fb{background:var(--blue-bg);color:var(--blue-text);border:1px solid var(--blue-border)}
+.empty-state{text-align:center;padding:3rem 1rem;color:var(--text3);font-size:14px}
+
+/* ── HELP ── */
+.help-box{background:var(--blue-bg);border:1px solid var(--blue-border);border-radius:var(--radius);padding:16px;font-size:13px;color:var(--blue-text);line-height:1.8}
+.help-box a{color:var(--fb);text-decoration:none;font-weight:500}.help-box a:hover{text-decoration:underline}
+.help-steps{margin:8px 0 0 16px}
+.help-steps li{margin-bottom:4px}
+.help-note{margin-top:10px;font-size:12px;color:var(--text2)}
+
+svg.icon{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;vertical-align:middle}
+@media(max-width:700px){
+  .summary-row{grid-template-columns:repeat(2,1fr)}
+  .tabs{flex-wrap:wrap;width:100%}
+  .tab{flex:1;justify-content:center}
+  .token-actions{flex-direction:column}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="hd-left">
+    <svg class="fb-logo" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+    <h1>Facebook Page Tracker</h1>
+  </div>
+  <span class="save-badge" id="save-badge">✓ บันทึกแล้ว</span>
+</header>
+
+<div class="app-body">
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-label">เพจ</div>
+    <div id="sidebar-pages"></div>
+    <button class="sidebar-add-btn" onclick="addPage()">
+      <svg style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      เพิ่มเพจ
+    </button>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-label">เมนู</div>
+    <button class="sidebar-nav-btn active" id="snav-pages" onclick="switchTab('pages')">
+      <svg style="width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;flex-shrink:0" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      จัดการเพจ
+    </button>
+    <button class="sidebar-nav-btn" id="snav-tokens" onclick="switchTab('tokens')">
+      <svg style="width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;flex-shrink:0" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Token Manager
+    </button>
+    <button class="sidebar-nav-btn" id="snav-recent" onclick="switchTab('recent')">
+      <svg style="width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;flex-shrink:0" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+      โพสต์ล่าสุด
+    </button>
+    <button class="sidebar-nav-btn" id="snav-help" onclick="switchTab('help')">
+      <svg style="width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;flex-shrink:0" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      วิธีขอ Token
+    </button>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+    <div class="summary-row" id="summary-row"></div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('pages')" id="tab-pages">
+        <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>จัดการเพจ
+      </button>
+      <button class="tab" onclick="switchTab('tokens')" id="tab-tokens">
+        <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Token Manager
+      </button>
+      <button class="tab" onclick="switchTab('recent')" id="tab-recent">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>โพสต์ล่าสุด
+      </button>
+      <button class="tab" onclick="switchTab('help')" id="tab-help">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>วิธีขอ Token
+      </button>
+    </div>
+
+    <!-- PAGES -->
+    <div class="section visible" id="section-pages">
+      <div id="pages-container"></div>
+    </div>
+
+    <!-- TOKEN MANAGER -->
+    <div class="section" id="section-tokens">
+      <div class="token-manager" id="token-manager"></div>
+      <a class="help-link" href="#" onclick="switchTab('help');return false;">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        วิธีขอ Page Access Token
+      </a>
+    </div>
+
+    <!-- RECENT -->
+    <div class="section" id="section-recent">
+      <div class="filter-row">
+        <span class="filter-label">กรอง:</span>
+        <button class="filter-btn active" id="f-all" onclick="setFilter('all')">ทั้งหมด</button>
+        <button class="filter-btn" id="f-posted" onclick="setFilter('posted')">✓ โพสต์แล้ว</button>
+        <button class="filter-btn" id="f-pending" onclick="setFilter('pending')">⏳ รอโพสต์</button>
+        <button class="filter-btn" id="f-fb" onclick="setFilter('fb')">📘 จาก Facebook</button>
+      </div>
+      <div class="recent-list" id="recent-list"></div>
+    </div>
+
+    <!-- HELP -->
+    <div class="section" id="section-help">
+    <div class="help-box">
+      <strong>⚠️ วิธีแก้ Error "pages_read_engagement"</strong>
+      <ol class="help-steps">
+        <li>ไปที่ <a href="https://developers.facebook.com/tools/explorer/" target="_blank">Graph API Explorer</a></li>
+        <li>เลือก App ของคุณด้านบนขวา</li>
+        <li>คลิก <strong>"Generate Access Token"</strong> (ปุ่มสีน้ำเงิน)</li>
+        <li>ติ๊ก Permission ให้ครบทั้งหมด:<br>
+          <code>pages_show_list</code><br>
+          <code>pages_read_engagement</code><br>
+          <code>pages_manage_posts</code><br>
+          <code>pages_read_user_content</code>
+        </li>
+        <li>คลิก <strong>"Generate Token"</strong> → อนุมัติใน popup</li>
+        <li>คัดลอก Token ใหม่มาใส่แทนอันเก่า แล้วกด <strong>ดึงข้อมูลเพจ</strong></li>
+      </ol>
+      <hr style="border:none;border-top:1px solid var(--blue-border);margin:12px 0">
+      <strong>ถ้ายังไม่ได้ — ตรวจสอบ App Mode</strong>
+      <ol class="help-steps">
+        <li>ไปที่ <a href="https://developers.facebook.com/apps/" target="_blank">My Apps</a> → เลือก App</li>
+        <li>เมนูซ้าย → <strong>Settings → Basic</strong></li>
+        <li>ดูว่า App Mode เป็น <strong>Development</strong> หรือ <strong>Live</strong></li>
+        <li>ถ้าเป็น Development: ใช้ได้เฉพาะ Facebook Account ที่เป็น Admin ของ App เท่านั้น</li>
+        <li>เพิ่ม Facebook Account ของคุณเป็น <strong>Tester</strong> ได้ที่: Roles → Test Users</li>
+      </ol>
+      <p class="help-note">💡 สำหรับใช้งานส่วนตัว ไม่ต้อง Submit for Review — แค่ใช้ Account ที่เป็น Admin ของ App ก็พอ</p>
+    </div>
+  </div>
+
+  </div><!-- /content -->
+</div><!-- /app-body -->
+
+<script>
+/* ══════════════════════════════════════════
+   DATA & STORAGE
+══════════════════════════════════════════ */
+const STORAGE_KEY = 'fb_page_tracker_v3';
+const COLORS = [
+  {bg:'#dbeafe',text:'#1e40af'},{bg:'#dcfce7',text:'#166534'},
+  {bg:'#fef3c7',text:'#92400e'},{bg:'#fce7f3',text:'#9d174d'},
+  {bg:'#ede9fe',text:'#4c1d95'},{bg:'#e0f2fe',text:'#0c4a6e'},
+  {bg:'#d1fae5',text:'#064e3b'},{bg:'#fef9c3',text:'#713f12'},
+];
+
+let pages = [];
+let editingPageName = null;
+let activeTab = 'pages';
+let activeFilter = 'all';
+// track which token fields are in edit mode
+let tokenEditing = {};
+// track show/hide token
+let tokenVisible = {};
+
+function today() { return new Date().toISOString().split('T')[0]; }
+function colorFor(i) { return COLORS[i % COLORS.length]; }
+function initials(name) {
+  const w = name.trim().split(/\s+/);
+  return w.length >= 2 ? (w[0][0] + w[1][0]).toUpperCase() : name.slice(0,2).toUpperCase();
+}
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmtDate(d) {
+  if (!d) return '';
+  try { return new Date(d).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'}); } catch { return d; }
+}
+function fmtDateTime(d) {
+  if (!d) return '';
+  try {
+    const dt = new Date(d);
+    const date = dt.toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'});
+    const time = dt.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+    return `${date} ${time}`;
+  } catch { return d; }
+}
+function maskToken(t) {
+  if (!t) return '';
+  if (t.length <= 12) return '•'.repeat(t.length);
+  return t.slice(0,6) + '••••••••••••' + t.slice(-4);
+}
+
+function load() {
+  try { const r = localStorage.getItem(STORAGE_KEY); if (r) pages = JSON.parse(r); } catch(e) {}
+  if (!pages || !pages.length) {
+    pages = [1,2,3,4].map(n => ({
+      id: n, name: `เพจที่ ${n}`, token: '', pageId: '', picture: '', fbPosts: [],
+      tokenSavedAt: null, posts: []
+    }));
+  }
+  pages.forEach(p => { if (!p.fbPosts) p.fbPosts = []; if (!p.tokenSavedAt) p.tokenSavedAt = null; });
+}
+
+let saveTimer = null;
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(pages));
+  const b = document.getElementById('save-badge');
+  b.classList.add('show');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => b.classList.remove('show'), 2000);
+}
+
+let selectedPageId = null; // null = แสดงทุกเพจ
+
+function selectPage(pid) {
+  selectedPageId = pid;
+  renderSidebar();
+  renderPages();
+  // switch to pages tab if not there
+  if (activeTab !== 'pages') switchTab('pages');
+}
+
+function renderSidebar() {
+  const container = document.getElementById('sidebar-pages');
+  if (!container) return;
+  container.innerHTML = '';
+
+  // "ทั้งหมด" button
+  const allBtn = document.createElement('button');
+  allBtn.className = 'sidebar-page-btn' + (selectedPageId === null ? ' active' : '');
+  allBtn.onclick = () => { selectedPageId = null; renderSidebar(); renderPages(); };
+  allBtn.innerHTML = `
+    <div class="sidebar-avatar" style="background:var(--bg3);color:var(--text2)">
+      <svg style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    </div>
+    <div class="sidebar-page-info">
+      <div class="sidebar-page-name">ทั้งหมด</div>
+      <div class="sidebar-page-sub">${pages.length} เพจ</div>
+    </div>
+  `;
+  container.appendChild(allBtn);
+
+  pages.forEach((page, pi) => {
+    const col = colorFor(pi);
+    const postedToday = page.posts.filter(p => {
+      const d = (p.scheduledAt||'').split('T')[0];
+      return d === new Date().toISOString().split('T')[0] && p.status === 'posted';
+    }).length;
+    const pending = page.posts.filter(p => p.status !== 'posted').length;
+    const isActive = selectedPageId === page.id;
+
+    const avatarHtml = page.picture
+      ? `<img src="${escHtml(page.picture)}" alt="">`
+      : `<span>${initials(page.name)}</span>`;
+
+    const dotColor = page.token && page.pageId ? 'var(--green-text)' : 'var(--border2)';
+
+    const btn = document.createElement('button');
+    btn.className = 'sidebar-page-btn' + (isActive ? ' active' : '');
+    btn.onclick = () => selectPage(page.id);
+    btn.innerHTML = `
+      <div class="sidebar-avatar" style="background:${col.bg};color:${col.text}">${avatarHtml}</div>
+      <div class="sidebar-page-info">
+        <div class="sidebar-page-name">${escHtml(page.name)}</div>
+        <div class="sidebar-page-sub">${pending > 0 ? `⏳ ${pending} รอ` : '✓ ครบแล้ว'}</div>
+      </div>
+      <div class="sidebar-dot" style="background:${dotColor}"></div>
+    `;
+    container.appendChild(btn);
+  });
+}
+
+
+function switchTab(tab) {
+  activeTab = tab;
+  ['pages','tokens','recent','help'].forEach(t => {
+    document.getElementById('tab-'+t)?.classList.toggle('active', t === tab);
+    document.getElementById('section-'+t)?.classList.toggle('visible', t === tab);
+    document.getElementById('snav-'+t)?.classList.toggle('active', t === tab);
+  });
+  if (tab === 'tokens') renderTokenManager();
+  if (tab === 'recent') renderRecent();
+}
+
+function setFilter(f) {
+  activeFilter = f;
+  ['all','posted','pending','fb'].forEach(k =>
+    document.getElementById('f-'+k)?.classList.toggle('active', k === f));
+  renderRecent();
+}
+
+/* ══════════════════════════════════════════
+   SUMMARY
+══════════════════════════════════════════ */
+function statusCounts() {
+  const todayStr = new Date().toISOString().split('T')[0];
+  let posted=0, pending=0, total=0, connected=0;
+  let todayPosted=0, todayScheduled=0, todayLive=0;
+  pages.forEach(p => {
+    if (p.token && p.pageId) connected++;
+    p.posts.forEach(pp => {
+      total++;
+      if (pp.status === 'posted') posted++;
+      else pending++;
+      const d = (pp.scheduledAt||'').split('T')[0];
+      if (d === todayStr) {
+        if (pp.status === 'posted') todayPosted++;
+        else {
+          const st = schedStatus(pp.scheduledAt, pp.status);
+          if (st.dotClass === 'dot-live') todayLive++;
+          else todayScheduled++;
+        }
+      }
+    });
+  });
+  return {posted, pending, total, pages: pages.length, connected,
+          todayPosted, todayScheduled, todayLive};
+}
+
+function renderSummary() {
+  const c = statusCounts();
+  const now = new Date();
+  const todayLabel = now.toLocaleDateString('th-TH',{weekday:'short',day:'numeric',month:'short',year:'2-digit'});
+  const todayTotal = c.todayPosted + c.todayLive + c.todayScheduled;
+
+  // หา latest post date across all pages
+  let latestDate = null;
+  pages.forEach(p => p.posts.forEach(pp => {
+    const d = pp.scheduledAt ? new Date(pp.scheduledAt) : null;
+    if (d && (!latestDate || d > latestDate)) latestDate = d;
+  }));
+  const latestLabel = latestDate
+    ? latestDate.toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'})
+    : '—';
+
+  document.getElementById('summary-row').innerHTML = `
+    <div class="stat" style="grid-column:1/-1;background:var(--bg2);border:1px solid var(--border)">
+      <div class="today-badge">📅 วันนี้ — ${todayLabel}</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+        <div>
+          <div class="stat-label">✅ โพสต์สำเร็จ</div>
+          <div class="stat-num green">${c.todayPosted}</div>
+          <div class="stat-sub">รายการ</div>
+        </div>
+        <div>
+          <div class="stat-label"><span style="color:#ef5350">●</span> กำลังโพสต์</div>
+          <div class="stat-num red">${c.todayLive}</div>
+          <div class="stat-sub">รายการ</div>
+        </div>
+        <div>
+          <div class="stat-label">⏳ ตั้งเวลาไว้</div>
+          <div class="stat-num yellow">${c.todayScheduled}</div>
+          <div class="stat-sub">รายการ</div>
+        </div>
+        <div>
+          <div class="stat-label">📊 รวมวันนี้</div>
+          <div class="stat-num">${todayTotal}</div>
+          <div class="stat-sub">รายการ</div>
+        </div>
+      </div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">🗂 เพจ</div>
+      <div class="stat-num">${c.pages}</div>
+      <div class="stat-sub">${c.connected} เชื่อมต่อแล้ว</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">📋 โพสต์ทั้งหมด</div>
+      <div class="stat-num">${c.total}</div>
+      <div class="stat-sub">ทุกเพจ</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">✅ สำเร็จรวม</div>
+      <div class="stat-num green">${c.posted}</div>
+      <div class="stat-sub">จาก ${c.total} รายการ</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">🕐 อัปเดตล่าสุด</div>
+      <div style="font-size:13px;font-weight:600;margin-top:4px;color:var(--text)">${latestLabel}</div>
+    </div>
+  `;
+}
+
+/* ══════════════════════════════════════════
+   TOKEN MANAGER TAB
+══════════════════════════════════════════ */
+function renderTokenManager() {
+  const container = document.getElementById('token-manager');
+  container.innerHTML = '';
+  pages.forEach((page, pi) => {
+    const col = colorFor(pi);
+    const hasToken = !!page.token;
+    const isEditing = !!tokenEditing[page.id];
+    const isVisible = !!tokenVisible[page.id];
+
+    const card = document.createElement('div');
+    card.className = 'token-card';
+    card.id = 'tcard-' + page.id;
+
+    const avatarHtml = page.picture
+      ? `<img src="${escHtml(page.picture)}" alt="">`
+      : `<span>${initials(page.name)}</span>`;
+
+    const savedAtHtml = page.tokenSavedAt
+      ? `<span>💾 บันทึกเมื่อ ${fmtDate(page.tokenSavedAt)}</span>` : '';
+    const pageIdHtml = page.pageId
+      ? `<span>🆔 Page ID: ${escHtml(page.pageId)}</span>` : '';
+
+    // token display value
+    const displayVal = hasToken
+      ? (isEditing ? escHtml(page.token) : (isVisible ? escHtml(page.token) : escHtml(maskToken(page.token))))
+      : '';
+
+    const inputType = (isEditing || isVisible || !hasToken) ? 'text' : 'password';
+    const inputClass = hasToken ? (isEditing ? 'token-input editing' : 'token-input has-token') : 'token-input';
+
+    card.innerHTML = `
+      <div class="token-card-header">
+        <div class="token-avatar" style="background:${col.bg};color:${col.text}">${avatarHtml}</div>
+        <div class="token-page-name">${escHtml(page.name)}</div>
+        <div class="token-status-dot ${hasToken ? 'dot-ok' : 'dot-none'}" title="${hasToken ? 'มี Token' : 'ยังไม่มี Token'}"></div>
+      </div>
+
+      <div class="token-field-row">
+        <input ${inputType === 'password' ? 'type="password"' : 'type="text"'}
+          class="${inputClass}"
+          id="tinput-${page.id}"
+          placeholder="${hasToken && !isEditing ? 'Token ถูกบันทึกแล้ว' : 'วาง Page Access Token ที่นี่...'}"
+          value="${displayVal}"
+          ${!isEditing && hasToken ? 'readonly' : ''}
+          oninput="onTokenInput(${page.id}, this.value)">
+
+        <!-- show / hide -->
+        <button class="icon-btn-sm" onclick="toggleTokenVisible(${page.id})" title="${isVisible ? 'ซ่อน' : 'แสดง'} Token">
+          ${isVisible
+            ? `<svg class="icon" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`
+            : `<svg class="icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`}
+        </button>
+
+        <!-- copy -->
+        ${hasToken ? `
+        <button class="icon-btn-sm" onclick="copyToken(${page.id})" title="คัดลอก Token">
+          <svg class="icon" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </button>` : ''}
+      </div>
+
+      ${hasToken && (savedAtHtml || pageIdHtml) ? `<div class="token-meta">${savedAtHtml}${pageIdHtml}</div>` : ''}
+      <div class="token-msg" id="tmsg-${page.id}"></div>
+
+      <div class="token-actions" style="margin-top:10px">
+        ${!isEditing && hasToken ? `
+          <button class="btn-secondary" onclick="startEditToken(${page.id})">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            แก้ไข Token
+          </button>
+          <button class="btn-primary" id="fbtn-${page.id}" onclick="fetchPage(${page.id})">
+            <svg class="icon" style="stroke:#fff" viewBox="0 0 24 24"><polyline points="23,4 23,10 17,10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            ดึงข้อมูลเพจ
+          </button>
+          <button class="btn-danger-outline" onclick="clearToken(${page.id})">
+            <svg class="icon" viewBox="0 0 24 24"><polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14a2,2,0,0,1-2,2H8a2,2,0,0,1-2-2L5,6"/></svg>
+            ลบ Token
+          </button>
+        ` : `
+          <button class="btn-primary" onclick="saveToken(${page.id})">
+            <svg class="icon" style="stroke:#fff" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg>
+            บันทึก Token
+          </button>
+          ${isEditing ? `
+          <button class="btn-secondary" onclick="cancelEditToken(${page.id})">ยกเลิก</button>` : ''}
+        `}
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+let tokenDraft = {};
+
+function onTokenInput(pid, val) { tokenDraft[pid] = val; }
+
+function startEditToken(pid) {
+  tokenEditing[pid] = true;
+  tokenVisible[pid] = true;
+  const page = pages.find(p => p.id === pid);
+  if (page) tokenDraft[pid] = page.token;
+  renderTokenManager();
+  setTimeout(() => document.getElementById('tinput-'+pid)?.focus(), 50);
+}
+
+function cancelEditToken(pid) {
+  tokenEditing[pid] = false;
+  tokenVisible[pid] = false;
+  delete tokenDraft[pid];
+  renderTokenManager();
+}
+
+function saveToken(pid) {
+  const page = pages.find(p => p.id === pid);
+  if (!page) return;
+  const val = (tokenDraft[pid] !== undefined ? tokenDraft[pid] : document.getElementById('tinput-'+pid)?.value || '').trim();
+  if (!val) { showTokenMsg(pid, 'err', 'กรุณาใส่ Token ก่อนบันทึก'); return; }
+  page.token = val;
+  page.tokenSavedAt = new Date().toISOString().split('T')[0];
+  tokenEditing[pid] = false;
+  tokenVisible[pid] = false;
+  delete tokenDraft[pid];
+  save();
+  renderTokenManager();
+  showTokenMsg(pid, 'ok', '✓ บันทึก Token แล้ว');
+}
+
+function clearToken(pid) {
+  if (!confirm('ลบ Token ของเพจนี้?')) return;
+  const page = pages.find(p => p.id === pid);
+  if (!page) return;
+  page.token = '';
+  page.pageId = '';
+  page.picture = '';
+  page.tokenSavedAt = null;
+  page.fbPosts = [];
+  tokenEditing[pid] = false;
+  tokenVisible[pid] = false;
+  delete tokenDraft[pid];
+  save();
+  renderTokenManager();
+  renderSummary();
+}
+
+function toggleTokenVisible(pid) {
+  tokenVisible[pid] = !tokenVisible[pid];
+  renderTokenManager();
+}
+
+function copyToken(pid) {
+  const page = pages.find(p => p.id === pid);
+  if (!page || !page.token) return;
+  navigator.clipboard.writeText(page.token).then(() => {
+    showTokenMsg(pid, 'ok', '✓ คัดลอก Token แล้ว');
+  }).catch(() => showTokenMsg(pid, 'err', 'ไม่สามารถคัดลอกได้'));
+}
+
+function showTokenMsg(pid, type, msg) {
+  const el = document.getElementById('tmsg-'+pid);
+  if (!el) return;
+  el.className = 'token-msg ' + type;
+  el.textContent = msg;
+  setTimeout(() => { el.className = 'token-msg'; el.textContent = ''; }, 3000);
+}
+
+async function fetchPage(pid) {
+  const page = pages.find(p => p.id === pid);
+  if (!page || !page.token) return;
+  const btn = document.getElementById('fbtn-'+pid);
+  if (btn) btn.disabled = true;
+  showTokenMsg(pid, 'loading', 'กำลังตรวจสอบ Token...');
+  try {
+    // Step 1: ตรวจสอบประเภท Token ด้วย /me?fields=id,name
+    const meRes = await fetch(
+      `https://graph.facebook.com/v19.0/me?fields=id,name&access_token=${encodeURIComponent(page.token)}`
+    );
+    const me = await meRes.json();
+    if (me.error) throw new Error(me.error.message);
+
+    // ถ้า name มีช่องว่าง = User, ถ้าไม่มีหรือเป็นตัวเลข = Page
+    // วิธีที่แม่นกว่า: ลอง /me/accounts ถ้า error → เป็น Page Token
+    let pageToken = page.token;
+    let pageId = null;
+    let pageName = null;
+    let pagePicture = null;
+
+    showTokenMsg(pid, 'loading', 'กำลังดึงรายการเพจ...');
+    const accountsRes = await fetch(
+      `https://graph.facebook.com/v19.0/me/accounts?fields=id,name,access_token,picture.type(large)&access_token=${encodeURIComponent(page.token)}`
+    );
+    const accountsData = await accountsRes.json();
+
+    if (accountsData.error) {
+      // เป็น Page Token อยู่แล้ว — ดึงข้อมูลเพจจาก /me โดยตรง
+      showTokenMsg(pid, 'loading', 'ตรวจพบ Page Token — กำลังดึงข้อมูล...');
+      const pageInfoRes = await fetch(
+        `https://graph.facebook.com/v19.0/me?fields=id,name,picture.type(large)&access_token=${encodeURIComponent(page.token)}`
+      );
+      const pageInfo = await pageInfoRes.json();
+      if (pageInfo.error) throw new Error(pageInfo.error.message);
+      pageId = pageInfo.id;
+      pageName = pageInfo.name;
+      pagePicture = pageInfo.picture?.data?.url || null;
+      pageToken = page.token;
+    } else {
+      // เป็น User Token — ให้เลือกเพจ
+      const accounts = accountsData.data || [];
+      if (!accounts.length) throw new Error('ไม่พบเพจที่คุณเป็น Admin\nตรวจสอบ Permission: pages_show_list, pages_read_engagement');
+
+      let chosen = accounts[0];
+      if (accounts.length > 1) {
+        const opts = accounts.map((a, i) => `${i+1}. ${a.name}`).join('\n');
+        const idx = parseInt(prompt(`พบ ${accounts.length} เพจ — พิมพ์หมายเลขที่ต้องการ:\n${opts}`, '1'));
+        if (isNaN(idx) || idx < 1 || idx > accounts.length) throw new Error('ยกเลิกการเลือกเพจ');
+        chosen = accounts[idx - 1];
+      }
+      pageId = chosen.id;
+      pageName = chosen.name;
+      pagePicture = chosen.picture?.data?.url || null;
+      pageToken = chosen.access_token;
+    }
+
+    // Step 2: บันทึกข้อมูล
+    page.pageId = pageId;
+    page.name = pageName;
+    page.picture = pagePicture || '';
+    page.token = pageToken;
+    page.tokenSavedAt = new Date().toISOString().split('T')[0];
+
+    // Step 3: ดึงโพสต์ล่าสุด (ลอง /posts ก่อน fallback /feed)
+    showTokenMsg(pid, 'loading', 'กำลังดึงโพสต์ล่าสุด...');
+    let fbPosts = [];
+    const postFields = 'id,message,story,created_time,likes.summary(true),comments.summary(true),shares';
+    for (const endpoint of ['posts', 'feed']) {
+      const postsRes = await fetch(
+        `https://graph.facebook.com/v19.0/${pageId}/${endpoint}?fields=${postFields}&limit=10&access_token=${encodeURIComponent(pageToken)}`
+      );
+      const postsData = await postsRes.json();
+      if (!postsData.error) { fbPosts = postsData.data || []; break; }
+      if (endpoint === 'feed') throw new Error(postsData.error.message + '\n\n→ ไปที่แท็บ "วิธีขอ Token" เพื่อดูวิธีแก้ไข');
+    }
+    page.fbPosts = fbPosts;
+    page.fbFetchedAt = new Date().toISOString();
+
+    save();
+    renderTokenManager();
+    renderPages();
+    renderSummary();
+    showTokenMsg(pid, 'ok', `✓ เชื่อมต่อ "${pageName}" สำเร็จ — ${page.fbPosts.length} โพสต์ล่าสุด`);
+  } catch(e) {
+    showTokenMsg(pid, 'err', '⚠ ' + e.message);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+/* ══════════════════════════════════════════
+   PAGES TAB
+══════════════════════════════════════════ */
+function renderPages() {
+  // บันทึกค่าทุก form ก่อน rebuild
+  pages.forEach(p => saveFormState(p.id));
+  const container = document.getElementById('pages-container');
+  container.innerHTML = '';
+
+  // กรองตาม selectedPageId
+  const visiblePages = selectedPageId !== null
+    ? pages.filter(p => p.id === selectedPageId)
+    : pages;
+
+  visiblePages.forEach((page, _pi) => {
+    const pi = pages.indexOf(page); // ใช้ index จริงสำหรับสี
+    // ถ้า pid กำลัง upload อยู่ → ไม่แตะเลย
+    if (uploadingPids.has(page.id)) return;
+
+    // ถ้ามีไฟล์รอโพสต์ → rebuild เฉพาะ sched list ไม่แตะ form/upload zone
+    if (pageFiles[page.id]) {
+      const postsEl = document.getElementById('posts-'+page.id);
+      if (postsEl) {
+        postsEl.innerHTML = '';
+        const sorted = [...page.posts].sort((a,b) => new Date(b.scheduledAt) - new Date(a.scheduledAt));
+        sorted.forEach(post => {
+          const item = document.createElement('div');
+          item.className = 'sched-item';
+          const st = schedStatus(post.scheduledAt, post.status);
+          const typeTag = {article:'📝 บทความ', image:'🖼 รูปภาพ', reel:'🎬 Reel/VDO'}[post.postType||'article'];
+          const tagClass = {article:'tag-article', image:'tag-image', reel:'tag-reel'}[post.postType||'article'];
+          item.innerHTML = `
+            <div class="sched-dot ${st.dotClass}"></div>
+            <div class="sched-info">
+              <div class="sched-title">${escHtml(post.title||'(ไม่มีหัวข้อ)')}</div>
+              <div class="sched-meta">
+                <span class="sched-type-tag ${tagClass}">${typeTag}</span>
+                <span>🕐 ${fmtDateTime(post.scheduledAt)}</span>
+                <span class="sched-status-label ${st.labelClass}">${st.label}</span>
+              </div>
+            </div>
+            <button class="icon-btn" onclick="cycleStatus(${page.id},${post.id})" title="สลับสถานะ">
+              <svg class="icon" style="width:15px;height:15px" viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg>
+            </button>
+            <button class="icon-btn danger" onclick="deletePost(${page.id},${post.id})" title="ลบ">
+              <svg class="icon" style="width:14px;height:14px" viewBox="0 0 24 24"><polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14a2,2,0,0,1-2,2H8a2,2,0,0,1-2-2L5,6"/></svg>
+            </button>
+          `;
+          postsEl.appendChild(item);
+        });
+      }
+      return; // ไม่ rebuild card ทั้งหมด
+    }
+
+    const col = colorFor(pi);
+    const postedCount = page.posts.filter(p => p.status === 'posted').length;
+    const card = document.createElement('div');
+    card.className = 'page-card';
+
+    const nameHtml = editingPageName === page.id
+      ? `<input class="page-name-input" id="ni-${page.id}" value="${escHtml(page.name)}" onblur="saveName(${page.id})" onkeydown="if(event.key==='Enter')saveName(${page.id})">`
+      : `<div class="page-name">${escHtml(page.name)}</div>`;
+
+    const avatarHtml = page.picture
+      ? `<img src="${escHtml(page.picture)}" alt="">` : `<span>${initials(page.name)}</span>`;
+
+    const connBadge = page.token && page.pageId
+      ? `<span class="conn-badge">📘 เชื่อมต่อแล้ว</span>` : '';
+
+    card.innerHTML = `
+      <div class="page-header">
+        <div class="page-avatar" style="background:${col.bg};color:${col.text}">${avatarHtml}</div>
+        <div class="page-name-wrap">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">${nameHtml}${connBadge}</div>
+          <div class="page-sub">${postedCount}/${page.posts.length} โพสต์แล้ว</div>
+        </div>
+        <button class="icon-btn" onclick="startEditName(${page.id})" title="แก้ไขชื่อ">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button class="icon-btn danger" onclick="deletePage(${page.id})" title="ลบเพจ">
+          <svg class="icon" viewBox="0 0 24 24"><polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14a2,2,0,0,1-2,2H8a2,2,0,0,1-2-2L5,6"/><path d="M10,11v6"/><path d="M14,11v6"/><path d="M9,6V4a1,1,0,0,1,1-1h4a1,1,0,0,1,1,1v2"/></svg>
+        </button>
+      </div>
+
+      <div class="page-card-body">
+        <div class="page-card-left">
+          ${page.fbPosts && page.fbPosts.length ? renderFbPreview(page) : ''}
+          <div class="section-divider">
+            <div class="section-label">ตั้งเวลาโพสต์</div>
+            <div class="schedule-form" id="sform-${page.id}">
+              <div class="schedule-type-row" id="typebtn-${page.id}">
+                <button class="type-btn t-article active" onclick="setPostType(${page.id},'article')">📝 บทความ</button>
+                <button class="type-btn t-image" onclick="setPostType(${page.id},'image')">🖼 รูปภาพ</button>
+                <button class="type-btn t-reel" onclick="setPostType(${page.id},'reel')">🎬 Reel/VDO</button>
+              </div>
+              <textarea class="post-input" id="ptitle-${page.id}" placeholder="Caption / คำอธิบายโพสต์..." rows="3"
+                style="resize:vertical;font-family:inherit;width:100%;display:block;box-sizing:border-box;margin-bottom:8px"
+                oninput="updatePreview(${page.id})"></textarea>
+              <div id="upload-zone-${page.id}" style="display:none;margin:8px 0">
+                <div class="upload-area" id="dropzone-${page.id}"
+                  ondragover="event.preventDefault();this.classList.add('drag')"
+                  ondragleave="this.classList.remove('drag')"
+                  ondrop="handleDrop(event,${page.id})">
+                  <input type="file" id="pfile-${page.id}" accept="" onchange="handleFileSelect(${page.id},this)">
+                  <div class="upload-area-label" id="ulabel-${page.id}">
+                    <svg style="width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.5;display:block;margin:0 auto 6px" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    ลากไฟล์มาวาง หรือคลิกเพื่อเลือก
+                  </div>
+                </div>
+                <div class="upload-preview" id="upreview-${page.id}" style="display:none">
+                  <div id="umedia-${page.id}"></div>
+                  <div class="upload-preview-info">
+                    <div class="upload-preview-name" id="uname-${page.id}"></div>
+                    <div class="upload-preview-size" id="usize-${page.id}"></div>
+                  </div>
+                  <button class="btn-remove-file" onclick="clearFile(${page.id})" title="ลบไฟล์">
+                    <svg style="width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="schedule-row" style="margin-top:8px">
+                <input type="datetime-local" class="datetime-input" id="pdt-${page.id}" value="${nowLocal()}"
+                  oninput="updateSmartBtn(${page.id})">
+                <button class="btn-schedule" onclick="handleSubmitPost(${page.id})" id="smartbtn-${page.id}">
+                  <svg class="icon" style="stroke:#fff;width:14px;height:14px" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+                  <span id="smartbtn-label-${page.id}">บันทึก</span>
+                </button>
+              </div>
+              <div class="progress-wrap" id="prog-${page.id}">
+                <div class="progress-bar-bg"><div class="progress-bar-fill" id="progbar-${page.id}" style="width:0%"></div></div>
+                <div class="progress-label" id="proglabel-${page.id}">กำลังอัพโหลด...</div>
+              </div>
+              <div class="post-result" id="presult-${page.id}"></div>
+            </div>
+            <div class="sched-list" id="posts-${page.id}"></div>
+          </div>
+        </div>
+
+        <div class="page-card-right">
+          <div class="preview-label">ตัวอย่างโพสต์</div>
+          <div id="preview-${page.id}">
+            <div class="preview-empty">พิมพ์ caption<br>เพื่อดูตัวอย่าง</div>
+          </div>
+        </div>
+      </div>
+    `;
+    container.appendChild(card);
+    // คืนค่าที่กรอกค้างไว้
+    restoreFormState(page.id);
+
+    const postsEl = document.getElementById('posts-'+page.id);
+    const sorted = [...page.posts].sort((a,b) => new Date(b.scheduledAt) - new Date(a.scheduledAt));
+    sorted.forEach(post => {
+      const item = document.createElement('div');
+      item.className = 'sched-item';
+      const st = schedStatus(post.scheduledAt, post.status);
+      const typeTag = {article:'📝 บทความ', image:'🖼 รูปภาพ', reel:'🎬 Reel/VDO'}[post.postType||'article'];
+      const tagClass = {article:'tag-article', image:'tag-image', reel:'tag-reel'}[post.postType||'article'];
+      const noteHtml = post.note ? `<div style="font-size:10px;color:var(--yellow-text);margin-top:2px">⚠ ${escHtml(post.note)}</div>` : '';
+      // ถ้าเป็น reel local และเลยเวลาแล้ว → แสดงปุ่ม "โพสต์เลย"
+      const page2 = page; // closure
+      const canPostNow = post.postType === 'reel' && post.status === 'pending' && page2.token && page2.pageId && !isFuture(post.scheduledAt);
+      const postNowBtn = canPostNow ? `
+        <button class="btn-schedule" style="font-size:11px;padding:5px 10px" onclick="triggerPostNow(${page.id},${post.id})" title="โพสต์เลย">
+          <svg class="icon" style="stroke:#fff;width:12px;height:12px" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg>
+        </button>` : '';
+      item.innerHTML = `
+        <div class="sched-dot ${st.dotClass}"></div>
+        <div class="sched-info">
+          <div class="sched-title">${escHtml(post.title||'(ไม่มีหัวข้อ)')}</div>
+          <div class="sched-meta">
+            <span class="sched-type-tag ${tagClass}">${typeTag}</span>
+            <span>🕐 ${fmtDateTime(post.scheduledAt)}</span>
+            <span class="sched-status-label ${st.labelClass}">${st.label}</span>
+          </div>
+          ${noteHtml}
+        </div>
+        ${postNowBtn}
+        <button class="icon-btn" onclick="cycleStatus(${page.id},${post.id})" title="สลับสถานะ">
+          <svg class="icon" style="width:15px;height:15px" viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg>
+        </button>
+        <button class="icon-btn danger" onclick="deletePost(${page.id},${post.id})" title="ลบ">
+          <svg class="icon" style="width:14px;height:14px" viewBox="0 0 24 24"><polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14a2,2,0,0,1-2,2H8a2,2,0,0,1-2-2L5,6"/></svg>
+        </button>
+      `;
+      postsEl.appendChild(item);
+    });
+    if (!sorted.length) {
+      postsEl.innerHTML = `<div style="text-align:center;padding:16px;font-size:13px;color:var(--text3)">ยังไม่มีโพสต์ที่ตั้งเวลาไว้</div>`;
+    }
+  });
+
+  if (editingPageName !== null) {
+    document.getElementById('ni-'+editingPageName)?.focus();
+  }
+}
+
+function renderFbPreview(page) {
+  const items = page.fbPosts.slice(0,3).map(fp => {
+    const msg = escHtml((fp.message || fp.story || '(ไม่มีข้อความ)').slice(0,90));
+    const dt = fmtDateTime(fp.created_time);
+    const likes = fp.likes?.summary?.total_count || 0;
+    const comments = fp.comments?.summary?.total_count || 0;
+    const shares = fp.shares?.count || 0;
+    return `<div class="fb-preview-item">
+      <div class="fb-preview-body">
+        <div class="fb-preview-msg">${msg}</div>
+        <div class="fb-preview-meta">
+          <span>🕐 ${dt}</span>
+          <span>👍${likes} 💬${comments} 🔁${shares}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  const fetchedAt = page.fbFetchedAt ? `<span style="font-size:11px;color:var(--text3)">ดึงล่าสุด: ${fmtDateTime(page.fbFetchedAt)}</span>` : '';
+  return `<div class="section-divider">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+      <div class="section-label" style="margin-bottom:0">📘 3 โพสต์ล่าสุดจาก Facebook</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        ${fetchedAt}
+        <button class="btn-import" onclick="refreshFbPosts(${page.id})" id="rbtn-${page.id}" style="display:flex;align-items:center;gap:4px">
+          <svg style="width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><polyline points="23,4 23,10 17,10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Refresh
+        </button>
+      </div>
+    </div>
+    <div id="fbpreview-msg-${page.id}" style="font-size:12px;margin-bottom:6px;display:none"></div>
+    ${items}
+  </div>`;
+}
+
+async function refreshFbPosts(pid) {
+  const page = pages.find(p => p.id === pid);
+  if (!page || !page.token) return;
+  const btn = document.getElementById('rbtn-'+pid);
+  const msgEl = document.getElementById('fbpreview-msg-'+pid);
+  if (btn) { btn.disabled = true; btn.style.opacity = '.5'; }
+  if (msgEl) { msgEl.style.display='block'; msgEl.style.color='var(--blue-text)'; msgEl.textContent = 'กำลังดึงโพสต์ล่าสุด...'; }
+  try {
+    const res = await fetch(`https://graph.facebook.com/v19.0/${page.pageId}/posts?fields=id,message,story,created_time,likes.summary(true),comments.summary(true),shares&limit=10&access_token=${encodeURIComponent(page.token)}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    page.fbPosts = data.data || [];
+    page.fbFetchedAt = new Date().toISOString();
+    save(); renderPages();
+  } catch(e) {
+    if (msgEl) { msgEl.style.color='var(--red-text)'; msgEl.textContent = '⚠ ' + e.message; }
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+  }
+}
+
+function importFbPost(pid, fbPostId) {
+  const page = pages.find(p => p.id === pid);
+  if (!page) return;
+  const fp = page.fbPosts.find(f => f.id === fbPostId);
+  if (!fp) return;
+  if (page.posts.some(pp => pp.fbPostId === fp.id)) { alert('โพสต์นี้มีอยู่แล้ว'); return; }
+  page.posts.push({
+    id: Date.now(), title: (fp.message||fp.story||'').slice(0,120),
+    date: fp.created_time ? fp.created_time.split('T')[0] : today(),
+    status: 'posted', source: 'facebook', fbPostId: fp.id,
+    likes: fp.likes?.summary?.total_count || 0,
+    comments: fp.comments?.summary?.total_count || 0,
+    shares: fp.shares?.count || 0,
+  });
+  save(); render();
+}
+
+/* ══════════════════════════════════════════
+   RECENT TAB
+══════════════════════════════════════════ */
+function renderRecent() {
+  const list = document.getElementById('recent-list');
+  let items = [];
+  pages.forEach((page, pi) => {
+    page.posts.forEach(post => items.push({...post, pageName: page.name, pageIdx: pi, pagePic: page.picture}));
+  });
+  if (activeFilter === 'fb') items = items.filter(i => i.source === 'facebook');
+  else if (activeFilter !== 'all') items = items.filter(i => i.status === activeFilter);
+  items.sort((a,b) => new Date(b.scheduledAt||b.date) - new Date(a.scheduledAt||a.date));
+  if (!items.length) { list.innerHTML = `<div class="empty-state"><div style="font-size:36px;margin-bottom:10px">📭</div>ไม่มีรายการ</div>`; return; }
+  list.innerHTML = items.map(item => {
+    const col = colorFor(item.pageIdx);
+    const av = item.pagePic ? `<img src="${escHtml(item.pagePic)}" alt="">` : `<span>${initials(item.pageName)}</span>`;
+    const st = schedStatus(item.scheduledAt||item.date, item.status);
+    const typeTag = {article:'📝 บทความ', image:'🖼 รูปภาพ', reel:'🎬 Reel'}[item.postType||'article'];
+    const tagClass = {article:'tag-article', image:'tag-image', reel:'tag-reel'}[item.postType||'article'];
+    return `<div class="recent-item">
+      <div class="recent-avatar" style="background:${col.bg};color:${col.text}">${av}</div>
+      <div class="recent-info">
+        <div class="recent-title">${escHtml(item.title||'(ไม่มีหัวข้อ)')}</div>
+        <div class="recent-meta">
+          <span>${escHtml(item.pageName)}</span>
+          <span class="sched-type-tag ${tagClass}">${typeTag}</span>
+          <span>🕐 ${fmtDateTime(item.scheduledAt||item.date)}</span>
+          <span class="sched-status-label ${st.labelClass}">${st.label}</span>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center">
+        <div class="sched-dot ${st.dotClass}" style="width:10px;height:10px;border-radius:50%;flex-shrink:0"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updatePreview(pid) {
+  const page = pages.find(p => p.id === pid);
+  if (!page) return;
+  const previewEl = document.getElementById('preview-'+pid);
+  if (!previewEl) return;
+  const caption = document.getElementById('ptitle-'+pid)?.value || '';
+  const file = pageFiles[pid];
+  const postType = pagePostType[pid] || 'article';
+  const col = colorFor(pages.indexOf(page));
+  const avatarHtml = page.picture
+    ? `<img src="${escHtml(page.picture)}" alt="">`
+    : `<span style="background:${col.bg};color:${col.text};width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600">${initials(page.name)}</span>`;
+
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+
+  let mediaHtml = '';
+  if (file) {
+    const url = URL.createObjectURL(file);
+    if (file.type.startsWith('image/')) {
+      mediaHtml = `<div class="preview-fb-media"><img src="${url}" alt="preview"></div>`;
+    } else {
+      mediaHtml = `<div class="preview-fb-media"><video src="${url}" style="width:100%;max-height:180px;object-fit:cover" muted></video></div>`;
+    }
+  } else if (postType !== 'article') {
+    mediaHtml = `<div class="preview-fb-media"><div class="preview-fb-media-empty">${postType==='image'?'🖼 รูปภาพจะแสดงที่นี่':'🎬 วิดีโอจะแสดงที่นี่'}</div></div>`;
+  }
+
+  if (!caption && !file) {
+    previewEl.innerHTML = `<div class="preview-empty">พิมพ์ caption<br>เพื่อดูตัวอย่าง</div>`;
+    return;
+  }
+
+  previewEl.innerHTML = `
+    <div class="preview-fb-post">
+      <div class="preview-fb-header">
+        <div class="preview-fb-avatar">${avatarHtml}</div>
+        <div>
+          <div class="preview-fb-name">${escHtml(page.name||'ชื่อเพจ')}</div>
+          <div class="preview-fb-meta">
+            <span>${timeStr}</span>
+            <span>·</span>
+            <span>🌐</span>
+          </div>
+        </div>
+      </div>
+      ${caption ? `<div class="preview-fb-msg">${escHtml(caption)}</div>` : ''}
+      ${mediaHtml}
+      <div class="preview-fb-actions">
+        <div class="preview-fb-action">👍 ถูกใจ</div>
+        <div class="preview-fb-action">💬 แสดงความคิดเห็น</div>
+        <div class="preview-fb-action">↗ แชร์</div>
+      </div>
+    </div>
+  `;
+}
+
+function nowLocal() {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0,16);
+}
+
+// track selected post type per page
+const pagePostType = {};
+
+function schedStatus(scheduledAt, status) {
+  if (status === 'posted')        return {dotClass:'dot-done',      labelClass:'label-done',      label:'✓ โพสต์สำเร็จ'};
+  if (status === 'scheduled_fb')  return {dotClass:'dot-scheduled', labelClass:'label-scheduled', label:'📅 ตั้งเวลาไว้ใน FB'};
+  if (status === 'failed')        return {dotClass:'dot-failed',    labelClass:'label-failed',    label:'✗ โพสต์ล้มเหลว'};
+  if (status === 'processing')    return {dotClass:'dot-live',      labelClass:'label-live',      label:'🔄 กำลังโพสต์...'};
+  const diff = new Date(scheduledAt) - new Date();
+  if (diff <= 0) return {dotClass:'dot-live', labelClass:'label-live', label:'🔴 กำลังโพสต์...'};
+  return {dotClass:'dot-scheduled', labelClass:'label-scheduled', label:'⏳ รอโพสต์'};
+}
+
+// per-page file store (File objects, not saved to localStorage)
+const pageFiles    = {};
+const uploadingPids = new Set(); // pid ที่กำลัง upload อยู่ → ห้าม rebuild DOM
+
+function setPostType(pid, type) {
+  pagePostType[pid] = type;
+  const row = document.getElementById('typebtn-'+pid);
+  if (!row) return;
+  row.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+  const map = {article:0, image:1, reel:2};
+  row.querySelectorAll('.type-btn')[map[type]]?.classList.add('active');
+  // show/hide upload zone
+  const zone = document.getElementById('upload-zone-'+pid);
+  if (zone) zone.style.display = type !== 'article' ? 'block' : 'none';
+  // update file input accept
+  const fi = document.getElementById('pfile-'+pid);
+  if (fi) fi.accept = type === 'image' ? 'image/*' : 'video/*';
+  const lbl = document.getElementById('ulabel-'+pid);
+  if (lbl) {
+    const icon = `<svg style="width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.5;display:block;margin:0 auto 6px" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>`;
+    lbl.innerHTML = icon + (type === 'image' ? 'เลือกรูปภาพ (JPG, PNG, WEBP)' : 'เลือกวิดีโอ (MP4, MOV)');
+  }
+}
+
+function handleFileSelect(pid, input) {
+  const file = input.files[0];
+  if (!file) return;
+  showFilePreview(pid, file);
+}
+
+function handleDrop(e, pid) {
+  e.preventDefault();
+  document.getElementById('dropzone-'+pid)?.classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  showFilePreview(pid, file);
+}
+
+function showFilePreview(pid, file) {
+  pageFiles[pid] = file;
+  const preview = document.getElementById('upreview-'+pid);
+  const mediaEl = document.getElementById('umedia-'+pid);
+  const nameEl = document.getElementById('uname-'+pid);
+  const sizeEl = document.getElementById('usize-'+pid);
+  const dropzone = document.getElementById('dropzone-'+pid);
+  if (!preview) return;
+
+  const url = URL.createObjectURL(file);
+  const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+  nameEl.textContent = file.name;
+  sizeEl.textContent = sizeMB + ' MB';
+
+  if (file.type.startsWith('image/')) {
+    mediaEl.innerHTML = `<img src="${url}" style="width:48px;height:48px;object-fit:cover;border-radius:6px">`;
+  } else {
+    mediaEl.innerHTML = `<video src="${url}" style="width:48px;height:48px;object-fit:cover;border-radius:6px" muted></video>`;
+  }
+
+  dropzone.style.display = 'none';
+  preview.style.display = 'flex';
+  updatePreview(pid);
+}
+
+function clearFile(pid) {
+  delete pageFiles[pid];
+  const preview = document.getElementById('upreview-'+pid);
+  const dropzone = document.getElementById('dropzone-'+pid);
+  const fi = document.getElementById('pfile-'+pid);
+  if (preview) preview.style.display = 'none';
+  if (dropzone) dropzone.style.display = 'block';
+  if (fi) fi.value = '';
+  updatePreview(pid);
+}
+
+function setProgress(pid, pct, label) {
+  const wrap = document.getElementById('prog-'+pid);
+  const bar = document.getElementById('progbar-'+pid);
+  const lbl = document.getElementById('proglabel-'+pid);
+  if (wrap) wrap.classList.toggle('show', pct >= 0);
+  if (bar) bar.style.width = pct + '%';
+  if (lbl) lbl.textContent = label;
+}
+
+function showPostResult(pid, type, msg) {
+  // re-query หลัง render เสมอ
+  const show = () => {
+    const el = document.getElementById('presult-'+pid);
+    if (!el) return;
+    el.className = 'post-result ' + type;
+    el.textContent = msg;
+    if (type === 'ok' || type === 'err') {
+      setTimeout(() => {
+        const el2 = document.getElementById('presult-'+pid);
+        if (el2) { el2.className = 'post-result'; el2.textContent = ''; }
+      }, 6000);
+    }
+  };
+  // ถ้า element ยังไม่มีให้รอ 1 frame
+  if (document.getElementById('presult-'+pid)) show();
+  else requestAnimationFrame(show);
+}
+
+function isFuture(dtVal) {
+  if (!dtVal) return false;
+  return new Date(dtVal) > new Date();
+}
+
+function updateSmartBtn(pid) {
+  saveFormState(pid);
+  const dtVal = formState[pid]?.scheduledAt || document.getElementById('pdt-'+pid)?.value || '';
+  const btn   = document.getElementById('smartbtn-'+pid);
+  const label = document.getElementById('smartbtn-label-'+pid);
+  const page  = pages.find(p => p.id === pid);
+  if (!btn || !label) return;
+  if (isFuture(dtVal)) {
+    // มีการตั้งเวลาในอนาคต → ตั้งเวลาโพสต์
+    btn.style.background = 'var(--fb)';
+    btn.style.color      = '#fff';
+    btn.style.border     = 'none';
+    label.textContent    = 'ตั้งเวลาโพสต์';
+    btn.innerHTML = `<svg class="icon" style="stroke:#fff;width:14px;height:14px" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg><span id="smartbtn-label-${pid}">ตั้งเวลาโพสต์</span>`;
+  } else if (page && page.token && page.pageId) {
+    // ไม่ได้ตั้งเวลา + มี token → โพสต์เลย
+    btn.innerHTML = `<svg class="icon" style="stroke:#fff;width:14px;height:14px" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg><span id="smartbtn-label-${pid}">โพสต์เลย</span>`;
+    btn.style.background = 'var(--fb)';
+    btn.style.color      = '#fff';
+    btn.style.border     = 'none';
+  } else {
+    // ไม่มี token → บันทึก
+    btn.innerHTML = `<svg class="icon" style="width:14px;height:14px" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg><span id="smartbtn-label-${pid}">บันทึก</span>`;
+    btn.style.background = 'var(--bg3)';
+    btn.style.color      = 'var(--text2)';
+    btn.style.border     = '1px solid var(--border)';
+  }
+}
+
+function handleSubmitPost(pid) {
+  saveFormState(pid);
+  const dtVal = formState[pid]?.scheduledAt || '';
+  const page  = pages.find(p => p.id === pid);
+  if (isFuture(dtVal)) {
+    addScheduledPost(pid);
+  } else if (page && page.token && page.pageId) {
+    postNow(pid);
+  } else {
+    addScheduledPost(pid);
+  }
+}
+
+
+function addScheduledPost(pid) {
+  const page = pages.find(p => p.id === pid);
+  if (!page) return;
+  saveFormState(pid);
+  const title       = formState[pid]?.caption?.trim() || '';
+  const scheduledAt = formState[pid]?.scheduledAt || nowLocal();
+  const postType    = pagePostType[pid] || 'article';
+  const file        = pageFiles[pid];
+
+  // VDO/Reel ไม่สามารถส่งไป backend ได้ (ไฟล์ใหญ่เกิน) → บันทึก local เสมอ
+  // แจ้งเตือนให้กลับมากด "โพสต์เลย" เมื่อถึงเวลา
+  if (postType === 'reel') {
+    page.posts.push({
+      id: Date.now(), title, scheduledAt, postType, status: 'pending', source: 'local',
+      fileName: file ? file.name : null, note: 'กลับมากด "โพสต์เลย" เมื่อถึงเวลา',
+    });
+    delete formState[pid];
+    clearFile(pid);
+    const titleEl = document.getElementById('ptitle-'+pid);
+    if (titleEl) titleEl.value = '';
+    save(); render();
+    showPostResult(pid, 'ok', '✓ บันทึกแล้ว — กลับมากด "โพสต์เลย" เมื่อถึงเวลาที่ตั้งไว้');
+    return;
+  }
+
+  // บทความ/รูปภาพ + มี token + อนาคต → ส่งผ่าน proxy (Facebook จัดการตั้งเวลาเอง)
+  if (page.token && page.pageId && isFuture(scheduledAt)) {
+    postNow(pid); // postNow อ่าน scheduledAt จาก formState แล้วส่ง scheduled_publish_time
+    return;
+  }
+
+  // fallback: บันทึก local
+  page.posts.push({
+    id: Date.now(), title, scheduledAt, postType, status: 'pending', source: 'manual',
+    fileName: file ? file.name : null,
+  });
+  delete formState[pid];
+  clearFile(pid);
+  const titleEl = document.getElementById('ptitle-'+pid);
+  if (titleEl) titleEl.value = '';
+  save(); render();
+}
+
+
+// ── API via proxy ─────────────────────────────────────────────────
+const PROXY = '/.netlify/functions/fb-proxy';
+
+async function proxyCall(payload) {
+  const res = await fetch(PROXY, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+  return data;
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function postNow(pid) {
+  const page = pages.find(p => p.id === pid);
+  if (!page || !page.token) { alert('ต้องใส่ Page Access Token ก่อน'); return; }
+  if (!page.pageId)         { alert('กรุณากด "ดึงข้อมูลเพจ" ใน Token Manager ก่อน'); return; }
+
+  saveFormState(pid);
+  const caption  = formState[pid]?.caption?.trim() || '';
+  const dtVal    = formState[pid]?.scheduledAt || '';
+  const postType = pagePostType[pid] || 'article';
+  const file     = pageFiles[pid];
+  const btn      = document.getElementById('smartbtn-'+pid);
+
+  if (postType !== 'article' && !file) { alert('กรุณาเลือกไฟล์ก่อนโพสต์'); return; }
+
+  // คำนวณ scheduledTime (Unix timestamp) ถ้าตั้งเวลาในอนาคต
+  let scheduledTime = null;
+  if (dtVal && isFuture(dtVal)) {
+    scheduledTime = Math.floor(new Date(dtVal).getTime() / 1000);
+  }
+
+  if (btn) btn.disabled = true;
+  uploadingPids.add(pid);
+  showPostResult(pid, '', '');
+
+  try {
+    let postId = null;
+
+    // ── TEXT ───────────────────────────────────────────────
+    if (postType === 'article') {
+      setProgress(pid, 50, scheduledTime ? 'กำลังตั้งเวลาโพสต์...' : 'กำลังโพสต์...');
+      const res = await proxyCall({ action:'post_text', pageId:page.pageId, token:page.token, message:caption, scheduledTime });
+      postId = res.id;
+    }
+
+    // ── IMAGE ──────────────────────────────────────────────
+    else if (postType === 'image') {
+      setProgress(pid, 20, 'กำลังเตรียมรูปภาพ...');
+      if (file.size > 10 * 1024 * 1024) throw new Error('ไฟล์รูปใหญ่เกิน 10MB');
+      const imageBase64 = await fileToBase64(file);
+      setProgress(pid, 60, scheduledTime ? 'กำลังตั้งเวลาโพสต์รูป...' : 'กำลังโพสต์รูป...');
+      const res = await proxyCall({ action:'post_photo', pageId:page.pageId, token:page.token, caption, imageBase64, imageMime:file.type, scheduledTime });
+      postId = res.post_id || res.id;
+    }
+
+    // ── REEL — 3-phase chunked via proxy ──────────────────
+    else if (postType === 'reel') {
+      const CHUNK = 3 * 1024 * 1024; // 3MB
+      const totalSize   = file.size;
+      const totalChunks = Math.ceil(totalSize / CHUNK);
+
+      // Phase 1: init
+      setProgress(pid, 0, `เริ่ม upload session (${(totalSize/1024/1024).toFixed(1)} MB)...`);
+      const init = await proxyCall({ action:'reel_init', pageId:page.pageId, token:page.token, fileSize:totalSize });
+      if (!init.video_id || !init.upload_url) throw new Error('Facebook ไม่ส่ง upload_url: ' + JSON.stringify(init));
+
+      const uploadSessionId = init.video_id;
+      const uploadUrl       = init.upload_url;
+      let   startOffset     = 0;
+
+      // Phase 2: chunks
+      for (let i = 0; i < totalChunks; i++) {
+        const end   = Math.min(startOffset + CHUNK, totalSize);
+        const chunk = file.slice(startOffset, end);
+        const pct   = Math.round(5 + (i / totalChunks) * 80);
+        setProgress(pid, pct, `chunk ${i+1}/${totalChunks} — ${(end/1024/1024).toFixed(1)}/${(totalSize/1024/1024).toFixed(1)} MB`);
+
+        const chunkBase64 = await blobToBase64(chunk);
+        const chunkRes = await proxyCall({
+          action: 'reel_chunk',
+          pageId: page.pageId,
+          token:  page.token,
+          uploadUrl,
+          uploadSessionId,
+          chunkBase64,
+          startOffset,
+          totalSize,
+        });
+        if (chunkRes.error) throw new Error('chunk ' + (i+1) + ': ' + chunkRes.error.message);
+        startOffset = parseInt(chunkRes.start_offset ?? end);
+      }
+
+      // Phase 3: finish + schedule/publish
+      setProgress(pid, 90, scheduledTime ? 'กำลังตั้งเวลา Reel...' : 'กำลัง publish Reel...');
+      const fin = await proxyCall({ action:'reel_finish', pageId:page.pageId, token:page.token, uploadSessionId, description:caption, scheduledTime });
+      postId = fin.video_id || uploadSessionId;
+    }
+
+    setProgress(pid, 100, scheduledTime ? '✓ ตั้งเวลาโพสต์สำเร็จ!' : '✓ โพสต์สำเร็จ!');
+    setTimeout(() => setProgress(pid, -1, ''), 3000);
+
+    const statusMsg = scheduledTime
+      ? `✓ ตั้งเวลาโพสต์สำเร็จ — ${fmtDateTime(dtVal)}`
+      : `✓ โพสต์สำเร็จ! Post ID: ${postId}`;
+    showPostResult(pid, 'ok', statusMsg);
+
+    page.posts.push({
+      id: Date.now(), title: caption,
+      scheduledAt: dtVal || new Date().toISOString(),
+      postType, status: scheduledTime ? 'scheduled_fb' : 'posted',
+      source: 'manual', fbPostId: String(postId || ''),
+      fileName: file?.name || null,
+    });
+
+    delete formState[pid];
+    clearFile(pid);
+    const titleEl = document.getElementById('ptitle-'+pid);
+    if (titleEl) titleEl.value = '';
+    save(); render();
+
+  } catch(e) {
+    setProgress(pid, -1, '');
+    showPostResult(pid, 'err', '⚠ ' + e.message);
+    console.error('postNow error:', e);
+  } finally {
+    uploadingPids.delete(pid);
+    if (btn) btn.disabled = false;
+  }
+}
+const formState = {}; // { [pid]: { caption, scheduledAt } }
+
+function saveFormState(pid) {
+  const titleEl = document.getElementById('ptitle-'+pid);
+  const dtEl    = document.getElementById('pdt-'+pid);
+  if (!formState[pid]) formState[pid] = {};
+  if (titleEl) formState[pid].caption     = titleEl.value;
+  if (dtEl)    formState[pid].scheduledAt = dtEl.value;
+}
+
+function restoreFormState(pid) {
+  if (!formState[pid]) return;
+  const titleEl = document.getElementById('ptitle-'+pid);
+  const dtEl    = document.getElementById('pdt-'+pid);
+  if (titleEl && formState[pid].caption     !== undefined) titleEl.value = formState[pid].caption;
+  if (dtEl    && formState[pid].scheduledAt !== undefined) dtEl.value    = formState[pid].scheduledAt;
+  updateSmartBtn(pid);
+}
+
+async function postNow(pid) {
+  const page = pages.find(p => p.id === pid);
+  if (!page || !page.token) { alert('ต้องใส่ Page Access Token ก่อน'); return; }
+  if (!page.pageId)         { alert('กรุณากด "ดึงข้อมูลเพจ" ใน Token Manager ก่อน'); return; }
+
+  saveFormState(pid);
+  const caption  = formState[pid]?.caption?.trim() || '';
+  const postType = pagePostType[pid] || 'article';
+  const file     = pageFiles[pid]; // snapshot ก่อน render ล้าง
+  const btn      = document.getElementById('smartbtn-'+pid);
+
+  if (postType !== 'article' && !file) { alert('กรุณาเลือกไฟล์ก่อนโพสต์'); return; }
+
+  if (btn) btn.disabled = true;
+  showPostResult(pid, '', '');
+
+  // ล็อก pid ไม่ให้ render ล้าง form และ file ระหว่าง upload
+  uploadingPids.add(pid);
+
+  try {
+    let postId = null;
+
+    if (postType === 'article') {
+      setProgress(pid, 50, 'กำลังโพสต์...');
+      const body = new URLSearchParams({ message: caption, access_token: page.token });
+      const res  = await fetch(`https://graph.facebook.com/v19.0/${page.pageId}/feed`, { method:'POST', body });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error.message);
+      postId = data.id;
+
+    } else if (postType === 'image') {
+      setProgress(pid, 20, 'กำลังอัพโหลดรูป...');
+      const fd = new FormData();
+      fd.append('source', file);
+      fd.append('caption', caption);
+      fd.append('access_token', page.token);
+      // track progress ด้วย XHR
+      postId = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.upload.onprogress = e => {
+          if (e.lengthComputable)
+            setProgress(pid, 20 + Math.round(e.loaded/e.total*75), `อัพโหลดรูป ${Math.round(e.loaded/e.total*100)}%`);
+        };
+        xhr.onload = () => {
+          try {
+            const d = JSON.parse(xhr.responseText);
+            if (d.error) reject(new Error(d.error.message));
+            else resolve(d.post_id || d.id);
+          } catch(e) { reject(new Error('Parse error')); }
+        };
+        xhr.onerror = () => reject(new Error('Network error'));
+        xhr.open('POST', `https://graph.facebook.com/v19.0/${page.pageId}/photos`);
+        xhr.send(fd);
+      });
+
+    } else if (postType === 'reel') {
+      const CHUNK_SIZE  = 3 * 1024 * 1024; // 3 MB
+      const totalSize   = file.size;
+      const totalChunks = Math.ceil(totalSize / CHUNK_SIZE);
+      const sizeMB      = (totalSize / 1024 / 1024).toFixed(1);
+
+      // Step 1: start session → ต้องส่งไป graph-video.facebook.com
+      setProgress(pid, 0, `เริ่ม upload session (${sizeMB} MB)...`);
+      const initFd = new FormData();
+      initFd.append('upload_phase', 'start');
+      initFd.append('file_size',    String(totalSize));
+      initFd.append('access_token', page.token);
+      const initRes  = await fetch(`https://graph-video.facebook.com/v19.0/${page.pageId}/videos`, {
+        method: 'POST', body: initFd,
+      });
+      const initData = await initRes.json();
+      if (initData.error) throw new Error('Start session: ' + initData.error.message);
+
+      const videoId   = initData.video_id;
+      const uploadUrl = `https://graph-video.facebook.com/v19.0/${page.pageId}/videos`;
+      let   startOffset = 0; // ใช้ offset จาก Facebook response จริง
+
+      // Step 2: transfer chunk ทีละ 3MB
+      for (let i = 0; i < totalChunks; i++) {
+        const end   = Math.min(startOffset + CHUNK_SIZE, totalSize);
+        const chunk = file.slice(startOffset, end);
+        const pct   = Math.round(5 + (i / totalChunks) * 80);
+        setProgress(pid, pct,
+          `chunk ${i+1}/${totalChunks} — ${(end/1024/1024).toFixed(1)}/${sizeMB} MB`);
+
+        const chunkFd = new FormData();
+        chunkFd.append('upload_phase',       'transfer');
+        chunkFd.append('start_offset',       String(startOffset));
+        chunkFd.append('upload_session_id',  videoId);
+        chunkFd.append('video_file_chunk',   chunk, file.name);
+        chunkFd.append('access_token',       page.token);
+
+        const chunkRes  = await fetch(uploadUrl, { method: 'POST', body: chunkFd });
+        const chunkData = await chunkRes.json();
+        if (chunkData.error) throw new Error(`chunk ${i+1}: ${chunkData.error.message}`);
+
+        // อ่าน start_offset ถัดไปจาก Facebook (แม่นกว่าคำนวณเอง)
+        startOffset = parseInt(chunkData.start_offset ?? end);
+      }
+
+      // Step 3: finish + publish
+      setProgress(pid, 88, 'กำลัง publish วิดีโอ...');
+      const finFd = new FormData();
+      finFd.append('upload_phase',      'finish');
+      finFd.append('upload_session_id', videoId);
+      finFd.append('description',       caption);
+      finFd.append('access_token',      page.token);
+      const finRes  = await fetch(uploadUrl, { method: 'POST', body: finFd });
+      const finData = await finRes.json();
+      if (finData.error) throw new Error('Finish: ' + finData.error.message);
+      postId = finData.video_id || videoId;
+    }
+
+    setProgress(pid, 100, 'โพสต์สำเร็จ!');
+    setTimeout(() => setProgress(pid, -1, ''), 3000);
+    showPostResult(pid, 'ok', `✓ โพสต์สำเร็จ! Post ID: ${postId}`);
+
+    page.posts.push({
+      id: Date.now(), title: caption,
+      scheduledAt: new Date().toISOString(),
+      postType, status: 'posted', source: 'manual',
+      fbPostId: String(postId), fileName: file?.name || null,
+    });
+    delete formState[pid];
+    clearFile(pid);
+    const titleEl2 = document.getElementById('ptitle-'+pid);
+    if (titleEl2) titleEl2.value = '';
+    save(); render();
+
+  } catch(e) {
+    setProgress(pid, -1, '');
+    showPostResult(pid, 'err', '⚠ ' + e.message);
+    console.error('postNow error:', e);
+  } finally {
+    uploadingPids.delete(pid);
+    if (btn) btn.disabled = false;
+  }
+}
+
+/* ══════════════════════════════════════════
+   PAGE CRUD
+══════════════════════════════════════════ */
+function startEditName(pid) { editingPageName = pid; renderPages(); }
+function saveName(pid) {
+  const inp = document.getElementById('ni-'+pid);
+  if (inp) { const p = pages.find(p => p.id === pid); if (p) p.name = inp.value.trim() || p.name; }
+  editingPageName = null; save(); render();
+}
+function addPage() {
+  const id = Date.now();
+  pages.push({id, name:'เพจใหม่', token:'', pageId:'', picture:'', fbPosts:[], tokenSavedAt:null, posts:[]});
+  save(); render();
+}
+function deletePage(pid) {
+  if (pages.length <= 1) return alert('ต้องมีอย่างน้อย 1 เพจ');
+  if (!confirm('ลบเพจนี้?')) return;
+  pages = pages.filter(p => p.id !== pid);
+  if (selectedPageId === pid) selectedPageId = null;
+  save(); render();
+}
+function addPost(pid) {
+  const p = pages.find(p => p.id === pid);
+  if (p) { p.posts.push({id:Date.now(), title:'', scheduledAt:nowLocal(), postType:'article', status:'pending', source:'manual'}); save(); render(); }
+}
+function deletePost(pid, postId) {
+  const p = pages.find(p => p.id === pid);
+  if (p) { p.posts = p.posts.filter(pp => pp.id !== postId); save(); render(); }
+}
+function updatePost(pid, postId, field, val) {
+  const p = pages.find(p => p.id === pid);
+  if (p) { const post = p.posts.find(pp => pp.id === postId); if (post) post[field] = val; }
+  save(); renderSummary(); if (activeTab === 'recent') renderRecent();
+}
+function cycleStatus(pid, postId) {
+  const p = pages.find(p => p.id === pid);
+  if (p) { const post = p.posts.find(pp => pp.id === postId); if (post) post.status = post.status === 'posted' ? 'pending' : 'posted'; }
+  save(); render();
+}
+
+
+function isUserTypingInForm() {
+  const active = document.activeElement;
+  if (!active) return false;
+  const tag = active.tagName;
+  if (tag !== 'TEXTAREA' && tag !== 'INPUT') return false;
+  const id = active.id || '';
+  // protect any field inside schedule form: ptitle-, pdt-, pfile-, token inputs
+  return id.startsWith('ptitle-') || id.startsWith('pdt-') || id.startsWith('tinput-') || id.startsWith('ni-');
+}
+
+function triggerPostNow(pid, postId) {
+  const post = pages.find(p=>p.id===pid)?.posts.find(pp=>pp.id===postId);
+  if (!post) return;
+  setPostType(pid, 'reel');
+  const titleEl = document.getElementById('ptitle-'+pid);
+  if (titleEl) { titleEl.value = post.title; saveFormState(pid); }
+  const zone = document.getElementById('upload-zone-'+pid);
+  if (zone) { zone.style.display = 'block'; zone.scrollIntoView({behavior:'smooth', block:'center'}); }
+  showPostResult(pid, 'ok', '✓ เลือกไฟล์วิดีโอแล้วกด "โพสต์เลย"');
+}
+
+function render() {
+  renderSummary();
+  renderSidebar();
+  if (!isUserTypingInForm()) renderPages();
+  if (activeTab === 'recent') renderRecent();
+  if (activeTab === 'tokens') renderTokenManager();
+}
+
+load();
+render();
+// auto-refresh status dots every 30s — ไม่ rebuild ถ้า user กำลังพิมพ์
+setInterval(() => {
+  if (!isUserTypingInForm()) {
+    if (activeTab === 'pages') renderPages();
+    if (activeTab === 'recent') renderRecent();
+  }
+}, 30000);
+</script>
+</body>
+</html>
